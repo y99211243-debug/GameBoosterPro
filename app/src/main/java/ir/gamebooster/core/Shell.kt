@@ -33,7 +33,7 @@ object Shell {
         return try {
             val proc = when (mode) {
                 Mode.ROOT -> Runtime.getRuntime().exec(arrayOf("su", "-c", cmd))
-                Mode.SHIZUKU -> Shizuku.newProcess(arrayOf("sh", "-c", cmd), null, null)
+                Mode.SHIZUKU -> shizukuExec(cmd)
                 Mode.NONE -> return ""
             }
             val out = proc.inputStream.bufferedReader().readText()
@@ -41,6 +41,27 @@ object Shell {
             proc.waitFor()
             if (out.isNotBlank()) out else err
         } catch (e: Throwable) { "" }
+    }
+
+    private fun shizukuExec(cmd: String): Process {
+        val clazz = Shizuku::class.java
+        try {
+            val m = clazz.getDeclaredMethod(
+                "newProcess",
+                Array<String>::class.java,
+                Array<String>::class.java,
+                String::class.java
+            )
+            m.isAccessible = true
+            return m.invoke(null, arrayOf("sh", "-c", cmd), null, null) as Process
+        } catch (_: Throwable) {}
+        val m = clazz.getMethod(
+            "newProcess",
+            Array<String>::class.java,
+            Array<String>::class.java,
+            String::class.java
+        )
+        return m.invoke(null, arrayOf("sh", "-c", cmd), null, null) as Process
     }
 
     fun read(path: String): String = run("cat $path").trim()
