@@ -12,15 +12,17 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - name: Setup Gradle wrapper
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+      - name: Download Gradle wrapper jar
         run: |
-          if [ ! -f gradlew ]; then
-            gradle wrapper --gradle-version 8.5
-          fi
+          curl -sL https://raw.githubusercontent.com/gradle/gradle/v8.5.0/gradle/wrapper/gradle-wrapper.jar -o gradle/wrapper/gradle-wrapper.jar
+          curl -sL https://raw.githubusercontent.com/gradle/gradle/v8.5.0/gradlew -o gradlew
           chmod +x gradlew
       - name: Build APK
         run: ./gradlew assembleDebug --stacktrace --no-daemon
       - uses: actions/upload-artifact@v4
+        if: success()
         with:
           name: gamebooster-apk
           path: app/build/outputs/apk/debug/*.apk
